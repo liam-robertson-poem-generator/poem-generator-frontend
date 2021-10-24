@@ -11,13 +11,13 @@ export class GeneratorComponent implements OnInit {
   constructor(private generatorService: GeneratorService) { }
 
   ngOnInit(): void {
+    this.printPoemData()
   }
 
-  printtPoemData() {
+  printPoemData() {
     this.generatorService.getPoemData().subscribe(
-      (poemData) => {
+      (poemData: Generator) => {
         console.log(poemData);
       });
   }
-
 }
