@@ -1,16 +1,21 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
+import { ConfigService } from 'src/app/services/config.service';
 
 @Injectable()
 export class GeneratorService {
 
-  constructor(private http: HttpClient) { }
+  constructor(public http: HttpClient, public configService: ConfigService) {}
 
-  poemDataUrl = '/syllabary-poems';
+  private generatorHeaders = {
+    headers: new HttpHeaders({
+      'Content-Type':  'application/json',
+    }),
+  };
 
-  getPoemData(): any {
-    return this.http.get<Generator>(this.poemDataUrl);
+  getPoemData(): Observable<any> {
+    return this.http.get("http://localhost:4200/api" + "/poemData/getAll", this.generatorHeaders);
   }
 }
