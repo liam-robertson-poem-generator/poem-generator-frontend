@@ -16,6 +16,15 @@ export class GeneratorService {
   };
 
   getPoemData(): Observable<any> {
-    return this.http.get("http://localhost:4200/api" + "/poemData/getAll", this.generatorHeaders);
+    return this.http.get("http://localhost:4200/api" + "/poemGenerator/getAllPoemCodes", this.generatorHeaders);
   }
+
+  getPoemXml(poemName: string): Observable<any> {
+    return this.http.get("http://localhost:4200/api/poems/" + poemName, {responseType: 'text'});
+  }
+
+  getPoemGlyph(glyphName: string): Observable<any> {
+    return this.http.get("http://localhost:4200/api/glyphs/" + glyphName, {responseType: 'text'});
+  }
+
 }
