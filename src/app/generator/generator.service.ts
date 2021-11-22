@@ -24,7 +24,7 @@ export class GeneratorService {
   }
 
   getPoemGlyph(glyphName: string): Observable<any> {
-    return this.http.get("http://localhost:4200/api/glyphs/" + glyphName, {responseType: 'text'});
+    return this.http.get("http://localhost:4200/api/poemGenerator/getGlyph2?poemCode=" + glyphName, {responseType: 'text'});
   }
 
 }

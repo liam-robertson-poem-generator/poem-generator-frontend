@@ -113,6 +113,7 @@ export class GeneratorComponent implements OnInit {
 		this.finalPoemList = this.iterateBySyllables(this.poemCodeList, this.startingPoem, this.numOfPoems, this.poemOrder)
 		
 		this.templateList = await this.createTemplateList(this.finalPoemList)
+		await this.sleep(1000);
 		console.log(this.templateList);
 		console.log(this.templateList.length);
 		
@@ -222,10 +223,10 @@ export class GeneratorComponent implements OnInit {
 
 			let hasTextVar = true;
 			const currentPoemName = poemList[index] + '.xml'
-			const currentGlyphName = poemList[index] + '.svg' 
+			const currentGlyphName = poemList[index] + '.jpg' 
 			
 			this.generatorService.getPoemXml(currentPoemName).subscribe(xml => {
-				this.generatorService.getPoemGlyph(currentGlyphName).subscribe(glyph => {			
+				this.generatorService.getPoemGlyph(poemList[index]).subscribe(glyph => {			
 
 					const parser = new DOMParser();
 					this.poemXml = parser.parseFromString(xml, "text/xml");
@@ -256,11 +257,16 @@ export class GeneratorComponent implements OnInit {
 	}
 
 	public writeDocument(outputList: IPoem[]) {
+		
 		const docContentList = [];
 		for (let index = 0; index < outputList.length; index++) { 
-			const poemGlyph = outputList[index].poemGlyph			
+			const poemGlyph = outputList[index].poemGlyph	
+			console.log(poemGlyph);
+		
 			const poemImage = new ImageRun({
-				data: poemGlyph,
+				data: Uint8Array.from(atob(poemGlyph), c =>
+				c.charCodeAt(0)
+			  ),
 				transformation: {
 					width: 215,
 					height: 215,
