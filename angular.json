@@ -100,6 +100,16 @@
             ],
             "scripts": []
           }
+        },
+        "deploy": {
+          "builder": "@angular/fire:deploy",
+          "options": {
+            "prerender": false,
+            "ssr": false,
+            "browserTarget": "poem-generator-frontend:build:production",
+            "firebaseProject": "syllabary-poem-generator",
+            "firebaseHostingSite": "syllabary-poem-generator"
+          }
         }
       }
     }
