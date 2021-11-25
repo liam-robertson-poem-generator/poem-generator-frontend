@@ -8,6 +8,7 @@ import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, Horizon
 import { join, resolve } from "path";
 const fs = require('fs');
 import { saveAs } from 'file-saver';
+import { AngularFireStorage, AngularFireStorageReference, AngularFireUploadTask } from "@angular/fire/compat/storage";
 
 interface IPoem {
 	poemCode: string;
@@ -60,12 +61,25 @@ export class GeneratorComponent implements OnInit {
 	poemXmlUnparsed: any;
 	poemText: any;
 	poemTitle: any;
+	url: any;
+	ref: AngularFireStorageReference;
+	task: AngularFireUploadTask;
+	downloadURL: Observable<String>;
 
   
-  constructor(private generatorService: GeneratorService) {  
+	constructor(
+		private generatorService: GeneratorService,
+		private afStorage: AngularFireStorage
+		) {  
 	}
 
   ngOnInit() {
+	  
+	let ref = this.afStorage.ref('/poems/1-1-1.xml');
+	this.url = ref.getDownloadURL();
+	this.url.subscribe((url: any)=>{this.imageUrl = url})
+	console.log(this.imageUrl);
+	
     this.generatorService.getPoemData().subscribe(poemCodeListRaw => {
 
 		this.poemFormGroup = new FormGroup ({
@@ -95,6 +109,9 @@ export class GeneratorComponent implements OnInit {
       );
 	})
   }
+	imageUrl(imageUrl: any) {
+		throw new Error("Method not implemented.");
+	}
 
 	public async execute() {		
 		this.formBool = false;
