@@ -2,12 +2,9 @@ import { Component, OnInit } from "@angular/core";
 import { Observable } from "rxjs";
 import { startWith, map } from "rxjs/operators";
 import { GeneratorService } from "./generator.service";
-import { Router } from '@angular/router';
 import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, HorizontalPositionRelativeFrom, ImageRun, Packer, PageBreak, Paragraph, TextRun, TextWrappingSide, TextWrappingType, VerticalPositionRelativeFrom } from "docx";
-import { join, resolve } from "path";
 const fs = require('fs');
-import { saveAs } from 'file-saver';
 import { AngularFireStorage, AngularFireStorageReference, AngularFireUploadTask } from "@angular/fire/compat/storage";
 
 interface IPoem {

@@ -19,13 +19,11 @@ import { initializeApp,provideFirebaseApp } from '@angular/fire/app';
 import { provideFirestore,getFirestore } from '@angular/fire/firestore';
 import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 import 'firebase/storage';
-import { UserProfileComponent } from './user-profile/user-profile.component';
 
 @NgModule({
   declarations: [
     GeneratorComponent,
     AppComponent,
-    UserProfileComponent,
   ],
   imports: [
     BrowserModule,
