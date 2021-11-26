@@ -1,4 +1,4 @@
-Email: <input type='text' />
-Password: <input type='password' />
+Email: <input name="email" [(ngModel)]="email" type='text' />
+Password: <input name="password" [(ngModel)]="password" type='password' />
 
-<button type='button'>Login</button>
+<button (click)="login()" type='button'>Login</button>

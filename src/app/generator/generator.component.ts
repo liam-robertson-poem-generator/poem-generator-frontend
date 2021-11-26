@@ -4,14 +4,14 @@ import { startWith, map } from "rxjs/operators";
 import { GeneratorService } from "./generator.service";
 import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, HorizontalPositionRelativeFrom, ImageRun, Packer, PageBreak, Paragraph, TextRun, TextWrappingSide, TextWrappingType, VerticalPositionRelativeFrom } from "docx";
-const fs = require('fs');
-import { AngularFireStorage, AngularFireStorageReference, AngularFireUploadTask } from "@angular/fire/compat/storage";
+import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
+import { saveAs } from 'file-saver';
 
 interface IPoem {
 	poemCode: string;
 	poemTitle: string;
 	poemText: string;
-	poemGlyph: string;
+	poemGlyph: any;
 	hasTextVar: boolean;
 }
 
@@ -59,52 +59,47 @@ export class GeneratorComponent implements OnInit {
 	poemText: any;
 	poemTitle: any;
 	url: any;
-	ref: AngularFireStorageReference;
-	task: AngularFireUploadTask;
 	downloadURL: Observable<String>;
+	empList: Array<string> = [];
+	currentPoemXml: string;
+	currentGlyph: string;
+	currentPoemXmlUrl: string;
+	currentGlyphUrl: string;
 
   
 	constructor(
 		private generatorService: GeneratorService,
-		private afStorage: AngularFireStorage
 		) {  
 	}
 
-  ngOnInit() {
-	  
-	let ref = this.afStorage.ref('/poems/1-1-1.xml');
-	this.url = ref.getDownloadURL();
-	this.url.subscribe((url: any)=>{this.imageUrl = url})
-	console.log(this.imageUrl);
+  async ngOnInit() {
 	
-    this.generatorService.getPoemData().subscribe(poemCodeListRaw => {
+		this.poemCodeListUnsorted = await this.generatorService.getPoemNameList();
+		console.log(this.poemCodeListUnsorted);
+		console.log(this.poemCodeListUnsorted.length);
 
+		
+		
 		this.poemFormGroup = new FormGroup ({
 			startingPoemControl: new FormControl(''),
 			poemOrderControl: new FormControl(''),
-			numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(poemCodeListRaw.length)])
+			numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(this.poemCodeListUnsorted.length)])
 		});
-
-		this.poemCodeListUnsorted = poemCodeListRaw.map((poemCodeStr: string) => 
-			poemCodeStr.slice(0, -4).split("-").map(coord => parseInt(coord))
-		)
 
 		this.poemDataBool = false;
 		this.formBool = true; 
 				
 		this.poemCodeList = this.sortByMultipleValues(this.poemCodeListUnsorted);	
 		
-		console.log(this.poemCodeList);
+		
 
-
-		this.optionsInt = this.poemCodeList;
-		this.options = this.optionsInt.map(value => value.join("-").toString())
-		this.filteredOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges
-      .pipe(
-        startWith(''),
-        map(val => this._filter(val))
-      );
-	})
+	this.optionsInt = this.poemCodeList;
+	this.options = this.optionsInt.map(value => value.join("-").toString())
+	this.filteredOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges
+	.pipe(
+	startWith(''),
+	map(val => this._filter(val))
+	);
   }
 	imageUrl(imageUrl: any) {
 		throw new Error("Method not implemented.");
@@ -122,7 +117,7 @@ export class GeneratorComponent implements OnInit {
 
 		console.log(this.numOfPoems);
 		console.log(this.startingPoem);
-		console.log(this.poemOrder);
+		console.log(this.poemOrder);	
 
 		this.finalPoemList = this.iterateBySyllables(this.poemCodeList, this.startingPoem, this.numOfPoems, this.poemOrder)
 		
@@ -231,19 +226,53 @@ export class GeneratorComponent implements OnInit {
 		return arr.filter(f => f.toString() !== item.toString())
 	}
 
-	public async createTemplateList(poemList: string[]):Promise<IPoem[]> {
+	public async createTemplateList(poemList: string[]) {
 		const outputList: IPoem[] = [];
 		for (let index = 0; index < poemList.length; index++) {		
 
 			let hasTextVar = true;
-			const currentPoemName = poemList[index] + '.xml'
-			const currentGlyphName = poemList[index] + '.jpg' 
-			
-			this.generatorService.getPoemXml(currentPoemName).subscribe(xml => {
-				this.generatorService.getPoemGlyph(poemList[index]).subscribe(glyph => {			
+			const currentPoemName = poemList[index] 
+
+			// this.currentPoemXmlUrl = this.generatorService.getPoemXmlUrl(currentPoemName);
+			// this.currentGlyphUrl = await this.generatorService.getPoemGlyphUrl("1-1-1");		
+
+			const storage = getStorage();
+			const listRef = ref(storage, 'poem-xml');
+
+			const xmlRef = ref(storage, 'poem-xml/' + currentPoemName + '.xml');
+			await getDownloadURL(xmlRef)
+				.then((xmlUrl) => {
+				this.currentPoemXmlUrl = xmlUrl
+				})
+				.catch((error) => {
+				error.code
+			});
+
+			// const glyphRef = ref(storage, 'glyphs/' + currentPoemName + '.svg');
+			const glyphRef = ref(storage, 'glyphs/1-1-1.jpg');
+			await getDownloadURL(glyphRef)
+				.then((glyphUrl) => {
+				this.currentGlyphUrl = glyphUrl
+				})
+				.catch((error) => {
+				error.code
+			});
+
+			console.log(this.currentPoemXmlUrl);
+			console.log(this.currentGlyphUrl);
+
+			this.generatorService.getPoemXml(this.currentPoemXmlUrl).subscribe(currentXml => {
+				this.generatorService.getPoemGlyph(this.currentGlyphUrl).subscribe(currentGlyph => {
+					console.log(currentGlyph);
+
+					var encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
+					var encodedDataPdf = btoa(currentGlyph);
+					console.log(currentXml);
+					console.log(encodedData);
+
 
 					const parser = new DOMParser();
-					this.poemXml = parser.parseFromString(xml, "text/xml");
+					this.poemXml = parser.parseFromString(currentXml, "text/xml");
 
 					this.poemTitle = this.poemXml.getElementsByTagName("title")[0].textContent
 					if (this.poemTitle == "") {
@@ -259,12 +288,10 @@ export class GeneratorComponent implements OnInit {
 						poemCode: poemList[index],
 						poemTitle: this.poemTitle,
 						poemText: this.poemText,
-						poemGlyph: glyph,
+						poemGlyph: encodedData,
 						hasTextVar: hasTextVar,
 					})
-
 				})
-
 			})
 		}					
 		return outputList
@@ -278,9 +305,7 @@ export class GeneratorComponent implements OnInit {
 			console.log(poemGlyph);
 		
 			const poemImage = new ImageRun({
-				data: Uint8Array.from(atob(poemGlyph), c =>
-				c.charCodeAt(0)
-			  ),
+				data: poemGlyph,
 				transformation: {
 					width: 215,
 					height: 215,
@@ -385,3 +410,4 @@ export class GeneratorComponent implements OnInit {
       option.toLowerCase().indexOf(val.toLowerCase()) === 0);              
   }
 }
+
