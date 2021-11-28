@@ -23,33 +23,12 @@ export class GeneratorComponent implements OnInit {
 	dropdownOptions: string[];
 	filteredDropdownOptions: Observable<string[]>;
 
-	poemCodeListUnsorted: number[][];
-	poemCodeList: number[][];
-
-	poemList: number[][];
 	startingPoem: number[];
 	numOfPoems: number;
 	poemOrder: string;
-	finalPoemList: string[];
-	templateList: any[];
-	startingPoemRaw: string;
-	loopCounter: number;
 
-	currentAxisNumber: number = 0
-	nextAxisNumberDict = new Map();
-	targetPoemDict = new Map();
 	poemFormGroup: FormGroup;
-	poemGlyph: any;
-	poemXml: any;
-	poemText: any;
-	poemTitle: any;
-	url: any;
-	downloadURL: Observable<String>;
-	empList: Array<string> = [];
-	currentPoemXml: string;
-	currentGlyph: string;
-	currentPoemXmlUrl: string;
-	currentGlyphUrl: string;
+	poemCodeList: number[][];
 
 	constructor(
 		private appService: AppService,
@@ -57,7 +36,6 @@ export class GeneratorComponent implements OnInit {
 	}
 
   async ngOnInit() {
-
 		const poemCodeListUnsorted: number[][] = await this.appService.getPoemNameList();
 		
 		this.poemFormGroup = new FormGroup ({
@@ -84,18 +62,18 @@ export class GeneratorComponent implements OnInit {
 		this.numOfPoems = this.poemFormGroup.value.numOfPoemsControl
 		this.poemOrder = this.poemFormGroup.value.poemOrderControl
 
-		this.finalPoemList = this.iterateBySyllables(this.poemCodeList, this.startingPoem, this.numOfPoems, this.poemOrder)
+		const finalPoemList = this.iterateBySyllables(this.poemCodeList, this.startingPoem, this.numOfPoems, this.poemOrder)
 		
-		this.templateList = await this.createTemplateList(this.finalPoemList)
-		this.writeDocument(this.templateList)
+		const templateList = await this.createTemplateList(finalPoemList)
+		this.writeDocument(templateList)
 
 		this.router.navigate(["/success"])
 	}
 
 	iterateBySyllables(poemList: number[][], startingPoem: number[], numOfPoems: number, poemOrder: string) {
-		const [initialUniqueCoordList1, initialUniqueCoordList2, initialUniqueCoordList3]: number[][] = this.updateUniqueLists(poemList, startingPoem);
+		let [uniqueCoordList1, uniqueCoordList2, uniqueCoordList3]: number[][] = this.updateUniqueLists(poemList, startingPoem);
 
-		const axisDict: Map<number, number[]> = new Map([[0, initialUniqueCoordList1], [1, initialUniqueCoordList2], [2, initialUniqueCoordList3]]);
+		const axisDict: Map<number, number[]> = new Map([[0, uniqueCoordList1], [1, uniqueCoordList2], [2, uniqueCoordList3]]);
 		const nextAxisNumberDict: Map<number, number> = new Map([[0, 1], [1, 2], [2, 3]]);
 		const outputList: number[][] = [];
 		let successCounter: number = 0
@@ -113,27 +91,22 @@ export class GeneratorComponent implements OnInit {
 		while (successCounter < numOfPoems) {
 			currentXUniqueList = axisDict.get(currentAxisNumber) as number[]
 			currentYUniqueList = axisDict.get(nextAxisNumberDict.get(currentAxisNumber) as number) as number[]
-			currentZUniqueList = axisDict.get(nextAxisNumberDict.get(nextAxisNumberDict.get(this.currentAxisNumber) as number) as number) as number[]
+			currentZUniqueList = axisDict.get(nextAxisNumberDict.get(nextAxisNumberDict.get(currentAxisNumber) as number) as number) as number[]
 			currentXCoord= currentXUniqueList[xLoopCounter]
 			currentYCoord = currentYUniqueList[yLoopCounter]
 			currentZCoord = currentZUniqueList[zLoopCounter]
 
 			const targetPoemDict: Map<number, number[]> = new Map([[0, [currentXCoord, currentYCoord, currentZCoord]], [1, [currentZCoord, currentXCoord, currentYCoord]], [2, [currentYCoord, currentZCoord, currentXCoord]]]);
-			currentTargetPoem = targetPoemDict.get(this.currentAxisNumber) as number[]
+			currentTargetPoem = targetPoemDict.get(currentAxisNumber) as number[]
 			
 			if (!this.checkArrIn2dMatrix(outputList, currentTargetPoem) && this.checkArrIn2dMatrix(poemList, currentTargetPoem)) {
-				console.log(successCounter);
-				const uniqueCoordList1 = this.updateUniqueLists(poemList, currentTargetPoem)[0]
-				const uniqueCoordList2 = this.updateUniqueLists(poemList, currentTargetPoem)[1]
-				const uniqueCoordList3 = this.updateUniqueLists(poemList, currentTargetPoem)[2]
+				[uniqueCoordList1, uniqueCoordList2, uniqueCoordList3]= this.updateUniqueLists(poemList, currentTargetPoem);
 				
-				currentAxisNumber = this.nextAxisNumberDict.get(currentAxisNumber) as number
+				currentAxisNumber = nextAxisNumberDict.get(currentAxisNumber) as number
 				outputList.push(currentTargetPoem.slice(0));
 				poemList = this.removeItem(poemList, currentTargetPoem);
 
-				zLoopCounter = 0;
-				yLoopCounter = 0;
-				xLoopCounter = 0;
+				[xLoopCounter, yLoopCounter, zLoopCounter] = [0, 0, 0];
 				successCounter++
 			} else if (currentXCoord == currentXUniqueList[currentXUniqueList.length - 1]) {
 				if (currentYCoord == currentYUniqueList[currentYUniqueList.length - 1]) {
@@ -190,56 +163,49 @@ export class GeneratorComponent implements OnInit {
 	async createTemplateList(poemList: string[]) {
 		const outputList: IPoem[] = [];
 		for (let index = 0; index < poemList.length; index++) {		
-
 			let hasTextVar = true;
 			const currentPoemName = poemList[index] 
 
 			const storage = getStorage();
-			const listRef = ref(storage, 'poem-xml');
-
 			const xmlRef = ref(storage, 'poem-xml/' + currentPoemName + '.xml');
+
+			let currentPoemXmlUrl: string = ""
+			let currentGlyphUrl: string = ""
 			await getDownloadURL(xmlRef)
 				.then((xmlUrl) => {
-				this.currentPoemXmlUrl = xmlUrl
+					currentPoemXmlUrl = xmlUrl
 				})
 				.catch((error) => {
-				error.code
+					error.code
 			});
 
 			const glyphRef = ref(storage, 'glyphs/' + currentPoemName + '.jpg');
 			await getDownloadURL(glyphRef)
 				.then((glyphUrl) => {
-				this.currentGlyphUrl = glyphUrl
+					currentGlyphUrl = glyphUrl
 				})
 				.catch((error) => {
-				error.code
+					error.code
 			});
-
-			console.log(this.currentPoemXmlUrl);
-			console.log(this.currentGlyphUrl);
-
-			this.appService.getPoemXml(this.currentPoemXmlUrl).subscribe(currentXml => {
-				this.appService.getPoemGlyph(this.currentGlyphUrl).subscribe(currentGlyph => {
-					console.log(currentGlyph);
-
-					var encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
+			this.appService.getPoemXml(currentPoemXmlUrl).subscribe(currentXml => {
+				this.appService.getPoemGlyph(currentGlyphUrl).subscribe(currentGlyph => {
+					let encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
 					const parser = new DOMParser();
-					this.poemXml = parser.parseFromString(currentXml, "text/xml");
+					const poemXml = parser.parseFromString(currentXml, "text/xml");
 
-					this.poemTitle = this.poemXml.getElementsByTagName("title")[0].textContent
-					if (this.poemTitle == "") {
-						this.poemTitle = "Untitled"
+					const poemText = poemXml.getElementsByTagName("text")[0].textContent
+					let poemTitle = poemXml.getElementsByTagName("title")[0].textContent
+					if (poemTitle == "") {
+						poemTitle = "Untitled"
 					}
 
-					this.poemText = this.poemXml.getElementsByTagName("text")[0].textContent
-					
-					if (this.poemText === null) {
+					if (poemText === null) {
 							hasTextVar = false;
 					}
 					outputList.push({
 						poemCode: poemList[index],
-						poemTitle: this.poemTitle,
-						poemText: this.poemText,
+						poemTitle: poemTitle as string,
+						poemText: poemText as string,
 						poemGlyph: encodedData,
 						hasTextVar: hasTextVar,
 					})
@@ -253,7 +219,6 @@ export class GeneratorComponent implements OnInit {
 		const docContentList = [];
 		for (let index = 0; index < outputList.length; index++) { 
 			const poemGlyph = outputList[index].poemGlyph	
-			console.log(poemGlyph);
 		
 			const poemImage = new ImageRun({
 				data: poemGlyph,
@@ -273,7 +238,7 @@ export class GeneratorComponent implements OnInit {
 				},
 			});	
 
-			let currentTitle = 
+			const currentTitle = 
 				new Paragraph({
 					children: [ 
 						new TextRun({text: outputList[index].poemTitle, font: "Underwood Champion", size: 40}),
@@ -283,14 +248,14 @@ export class GeneratorComponent implements OnInit {
 					alignment: AlignmentType.CENTER,
 				})
 
-			let currentText = 
+			const currentText = 
 				new Paragraph({
 					children: [ 
 						new TextRun({text: outputList[index].poemText, font: "Underwood Champion", size: 30, break: 2}),
 					],
 				})
 
-			let currentImage = new Paragraph({
+			const currentImage = new Paragraph({
 				children: [
 					poemImage
 				]})
@@ -341,8 +306,6 @@ export class GeneratorComponent implements OnInit {
 		const finalUniqueList = currentCoordUnique.sort(function(a, b){return a - b});
 		return finalUniqueList
 	}
-
-	
 
 	sleep(ms: number) { 
 		return new Promise(resolve => setTimeout(resolve, ms));
