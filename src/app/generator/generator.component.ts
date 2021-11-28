@@ -7,6 +7,7 @@ import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, Horizon
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
 import { saveAs } from 'file-saver';
 import { IPoem } from "../models/poem";
+import { Router } from "@angular/router";
 
 @Component({
   selector: 'app-generator',
@@ -58,12 +59,11 @@ export class GeneratorComponent implements OnInit {
 	currentGlyph: string;
 	currentPoemXmlUrl: string;
 	currentGlyphUrl: string;
-	router: any;
 
   
 	constructor(
 		private appService: AppService,
-		) {  
+		private router: Router) {  
 	}
 
   async ngOnInit() {

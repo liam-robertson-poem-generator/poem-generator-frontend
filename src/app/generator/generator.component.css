@@ -1,101 +1,12 @@
-/* html {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    overflow: auto;
-}
-
-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column; 
-    font-family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
-    font-size: 2em;
-    color: #0b2642;
-    background-image: url(../../assets/syllabary-background.svg);
-    backdrop-filter: blur(0.2vh);
-}
-
-body:after { 
-    flex: 8;
-    content: '';
-  }
-
-  body:before {
-    flex: 2;
-    content: '';
-}
-
 h1 {
-    font-style: italic;
-    font-weight: normal;
-    color: #414141;
-    margin-bottom: 1em;
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 2em;
+    margin-bottom: 1.5em;
+    color: rgb(27, 27, 27);
 }
-  
-.example-button-row {
-    width: 100%;
-  }
 
 button {
-    margin: 0.5em auto 0 auto;
-    border: 0.1em solid rgb(189, 189, 189);
-    border-radius: 0.2em;
-    padding: 0.5em 1em;
+    margin-top: 0.5em;
+    border-radius: 0.3em;
     font-size: 1em;
-    width: 30%;
+    padding: 0.25em 1.5em;
 }
-
-.example-container {
-    width: 100%;
-    margin: auto;
-  }
-
-.example-dropdown {
-    width: 100%;
-    margin: auto;
-}
-
-.example-form {
-    margin: auto;
-  }
-  
-.example-full-width {
-    width: 100%;
-}
- 
-.main-container {
-    display: flex;
-    flex-direction: column;
-    padding: 1em 4em;
-    background-color: rgb(255, 255, 255);
-    box-shadow: 0 0 5px 10px rgba(255, 255, 255, 0.966);
-    text-align: center;
-    border-radius: 3em;
-}
-
-.progress-bar {
-    width: 60%;
-    padding: 1em 4em;
-    box-shadow: 0 0 10px 20px rgba(255, 255, 255, 0.966);
-    background-color: rgb(255, 255, 255);
-    text-align: left;
-    padding: 2em 2em 4em 2em;
-    border-radius: 3em;
-}
-
-.progress-bar-mat {
-    height: 1em;
-    border-radius: 3em;
-}
-
-.success-container {
-    padding: 4em 4em;
-    box-shadow: 0 0 10px 20px rgba(255, 255, 255, 0.966);
-    background-color: rgb(255, 255, 255);
-    text-align: left;
-    padding: 2em 2em 4em 2em;
-    border-radius: 3em;
-} */

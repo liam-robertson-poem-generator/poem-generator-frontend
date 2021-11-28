@@ -1,0 +1,13 @@
+.progress-bar {
+    width: 20em;
+    margin-bottom: 1em;
+    box-shadow: 0 0 10px 20px rgba(255, 255, 255, 0.966);
+    background-color: rgb(255, 255, 255);
+    text-align: left;
+    border-radius: 3em;
+}
+
+.progress-bar-mat {
+    height: 1em;
+    border-radius: 3em;
+}

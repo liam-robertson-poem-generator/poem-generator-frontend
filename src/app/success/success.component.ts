@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AppService } from '../app.service';
 
 @Component({
@@ -10,8 +11,14 @@ import { AppService } from '../app.service';
 
 export class SuccessComponent implements OnInit {
 
-  constructor() { }
+  constructor(
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
+  }
+
+  backToMain() {
+    this.router.navigate(["/generator"])
   }
 }
