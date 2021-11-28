@@ -6,14 +6,7 @@ import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms'
 import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, HorizontalPositionRelativeFrom, ImageRun, Packer, PageBreak, Paragraph, TextRun, TextWrappingSide, TextWrappingType, VerticalPositionRelativeFrom } from "docx";
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
 import { saveAs } from 'file-saver';
-
-interface IPoem {
-	poemCode: string;
-	poemTitle: string;
-	poemText: string;
-	poemGlyph: any;
-	hasTextVar: boolean;
-}
+import { IPoem } from "../models/poem";
 
 @Component({
   selector: 'app-generator',
@@ -65,6 +58,7 @@ export class GeneratorComponent implements OnInit {
 	currentGlyph: string;
 	currentPoemXmlUrl: string;
 	currentGlyphUrl: string;
+	router: any;
 
   
 	constructor(
@@ -77,8 +71,6 @@ export class GeneratorComponent implements OnInit {
 		this.poemCodeListUnsorted = await this.appService.getPoemNameList();
 		console.log(this.poemCodeListUnsorted);
 		console.log(this.poemCodeListUnsorted.length);
-
-		
 		
 		this.poemFormGroup = new FormGroup ({
 			startingPoemControl: new FormControl(''),
@@ -106,8 +98,7 @@ export class GeneratorComponent implements OnInit {
 	}
 
 	public async execute() {		
-		this.formBool = false;
-		this.loadingBool = true;
+		this.router.navigate(["/loading"])
 		await this.sleep(100);
 
 		this.startingPoemRaw = this.poemFormGroup.value.startingPoemControl
@@ -129,8 +120,7 @@ export class GeneratorComponent implements OnInit {
 		this.writeDocument(this.templateList)
 		await this.sleep(1500);
 
-		this.loadingBool = false;
-		this.successBool = true;
+		this.router.navigate(["/success"])
 	}
 
 	public iterateBySyllables(poemList: number[][], startingPoem: number[], numOfPoems: number, poemOrder: string) {
@@ -356,11 +346,6 @@ export class GeneratorComponent implements OnInit {
 		Packer.toBlob(doc).then((blob) => {
 			saveAs(blob, "example.docx");
 		});
-
-		// Packer.toBuffer(doc).then((buffer) => {
-		// 	this.outputPath = "generated-poems_" + this.startingPoemRaw + "_" + this.numOfPoems + ".docx"
-		// 	fs.writeFileSync("My document.docx", buffer) 
-		// });	
 	}
 
 	public sortByMultipleValues(inputList: number[][]): number[][] {
@@ -392,10 +377,7 @@ export class GeneratorComponent implements OnInit {
 		return finalUniqueList
 	}
 
-	backToMain() {
-		this.successBool = false;
-		this.formBool = true;
-	}
+	
 
 	sleep(ms: number) { 
 		return new Promise(resolve => setTimeout(resolve, ms));

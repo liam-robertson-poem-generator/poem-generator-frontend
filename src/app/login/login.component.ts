@@ -19,8 +19,6 @@ export class LoginComponent implements OnInit {
   }
 
   login(): void {
-    console.log(this.email);
-
     this.auth.signInWithEmailAndPassword(this.email, this.password)
     .then(() => {
       this.router.navigate(["/generator"])
@@ -29,5 +27,4 @@ export class LoginComponent implements OnInit {
       console.log(error.code)
       )
   }
-
 }

@@ -14,9 +14,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { LoginComponent } from './login/login.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AppRoutingModule } from './app-routing.module';
 import { LoadingComponent } from './loading/loading.component';
 import { SuccessComponent } from './success/success.component';
+import { RouterModule, Routes } from '@angular/router';
+
+const routes: Routes = [
+  { path: "", component: LoginComponent},
+  { path: "generator", component: GeneratorComponent},
+  { path: "loading", component: LoadingComponent},
+  { path: "success", component: SuccessComponent},
+];
 
 @NgModule({
   declarations: [   
@@ -31,7 +38,6 @@ import { SuccessComponent } from './success/success.component';
     FormsModule,
     AngularFireStorageModule,
     HttpClientModule,
-    AppRoutingModule ,
     ReactiveFormsModule,
     MatAutocompleteModule,
     MatInputModule,
@@ -40,6 +46,7 @@ import { SuccessComponent } from './success/success.component';
     MatProgressBarModule,
     MatFormFieldModule,
     AngularFireModule.initializeApp(environment.firebase),
+    RouterModule.forRoot(routes),
   ],
   providers: [],
   bootstrap: [AppComponent]
