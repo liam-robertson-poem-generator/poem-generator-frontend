@@ -1,7 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { Observable } from "rxjs";
 import { startWith, map } from "rxjs/operators";
-import { GeneratorService } from "./generator.service";
+import { AppService } from "../app.service";
 import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, HorizontalPositionRelativeFrom, ImageRun, Packer, PageBreak, Paragraph, TextRun, TextWrappingSide, TextWrappingType, VerticalPositionRelativeFrom } from "docx";
 import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
@@ -18,7 +18,7 @@ interface IPoem {
 @Component({
   selector: 'app-generator',
   templateUrl: './generator.component.html',
-  providers: [ GeneratorService ],
+  providers: [ AppService ],
   styleUrls: ['./generator.component.css']
 })
 
@@ -68,13 +68,13 @@ export class GeneratorComponent implements OnInit {
 
   
 	constructor(
-		private generatorService: GeneratorService,
+		private appService: AppService,
 		) {  
 	}
 
   async ngOnInit() {
 	
-		this.poemCodeListUnsorted = await this.generatorService.getPoemNameList();
+		this.poemCodeListUnsorted = await this.appService.getPoemNameList();
 		console.log(this.poemCodeListUnsorted);
 		console.log(this.poemCodeListUnsorted.length);
 
@@ -233,9 +233,6 @@ export class GeneratorComponent implements OnInit {
 			let hasTextVar = true;
 			const currentPoemName = poemList[index] 
 
-			// this.currentPoemXmlUrl = this.generatorService.getPoemXmlUrl(currentPoemName);
-			// this.currentGlyphUrl = await this.generatorService.getPoemGlyphUrl("1-1-1");		
-
 			const storage = getStorage();
 			const listRef = ref(storage, 'poem-xml');
 
@@ -248,8 +245,7 @@ export class GeneratorComponent implements OnInit {
 				error.code
 			});
 
-			// const glyphRef = ref(storage, 'glyphs/' + currentPoemName + '.svg');
-			const glyphRef = ref(storage, 'glyphs/1-1-1.jpg');
+			const glyphRef = ref(storage, 'glyphs/' + currentPoemName + '.jpg');
 			await getDownloadURL(glyphRef)
 				.then((glyphUrl) => {
 				this.currentGlyphUrl = glyphUrl
@@ -261,8 +257,8 @@ export class GeneratorComponent implements OnInit {
 			console.log(this.currentPoemXmlUrl);
 			console.log(this.currentGlyphUrl);
 
-			this.generatorService.getPoemXml(this.currentPoemXmlUrl).subscribe(currentXml => {
-				this.generatorService.getPoemGlyph(this.currentGlyphUrl).subscribe(currentGlyph => {
+			this.appService.getPoemXml(this.currentPoemXmlUrl).subscribe(currentXml => {
+				this.appService.getPoemGlyph(this.currentGlyphUrl).subscribe(currentGlyph => {
 					console.log(currentGlyph);
 
 					var encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
