@@ -17,6 +17,16 @@ import { Router } from "@angular/router";
 })
 
 export class GeneratorComponent implements OnInit {
+
+	// To Do List:
+	// - Router guards
+	// - Fix algorithm
+	// - Default page instead of blank login
+	// - Routing Loading pages
+	// - Make sure the line breaks within poems are conserved (in conversion from xml to json).
+	// - Assuming that each cell retains its file name code in the directory, delete “Untitled” and the bracketed codes from the top of each untitled text for the print copy. I think only 5-10% of the texts have actual titles. Ideally, keep the definite titles and delete the codes beside them. If that’s too awkward, 2nd-best option would be just to leave the bracketed codes after the actual titles.
+	// - Change from Underwood to Garamond font.
+	
 	poemDataBool: boolean = true;
 	formBool: boolean = false;
 
@@ -32,7 +42,8 @@ export class GeneratorComponent implements OnInit {
 
 	constructor(
 		private appService: AppService,
-		private router: Router) { }
+		private router: Router
+		) { }
 
   async ngOnInit() {
 		const poemCodeListUnsorted: number[][] = await this.appService.getPoemNameList();
@@ -60,6 +71,10 @@ export class GeneratorComponent implements OnInit {
 		this.startingPoem = startingPoemRaw.split('-').map(coord => parseInt(coord))
 		this.numOfPoems = this.poemFormGroup.value.numOfPoemsControl
 		this.poemOrder = this.poemFormGroup.value.poemOrderControl
+
+		console.log(this.startingPoem);
+		console.log(this.numOfPoems);
+		console.log(this.poemOrder);
 
 		const finalPoemList = this.iterateBySyllables(this.poemCodeList, this.startingPoem, this.numOfPoems, this.poemOrder)
 		
@@ -272,7 +287,7 @@ export class GeneratorComponent implements OnInit {
 		});
 
 		Packer.toBlob(doc).then((blob) => {
-			saveAs(blob, "syllabary-poems_" + this.startingPoem + "_" + this.numOfPoems + "_.docx");
+			saveAs(blob, "syllabary-poems_" + this.startingPoem.join("-") + "_" + this.numOfPoems + ".docx");
 		});
 	}
 
