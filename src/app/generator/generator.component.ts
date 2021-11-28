@@ -6,7 +6,7 @@ import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { AlignmentType, Document, HorizontalPositionAlign, ImageRun, Packer, Paragraph, TextRun, VerticalPositionRelativeFrom } from "docx";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { saveAs } from 'file-saver';
-import { IPoem } from "../models/poem";
+import { IPoem } from "./models/poem";
 import { Router } from "@angular/router";
 
 @Component({
@@ -259,7 +259,6 @@ export class GeneratorComponent implements OnInit {
 				children: [
 					poemImage
 				]})
-				
 				
 			docContentList.push(currentTitle) 
 			docContentList.push(currentText) 
