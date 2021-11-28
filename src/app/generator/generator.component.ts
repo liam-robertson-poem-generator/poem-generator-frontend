@@ -2,9 +2,9 @@ import { Component, OnInit } from "@angular/core";
 import { Observable } from "rxjs";
 import { startWith, map } from "rxjs/operators";
 import { AppService } from "../app.service";
-import { FormControl, Validators, FormBuilder, FormGroup } from '@angular/forms';
-import { AlignmentType, Document, HeadingLevel, HorizontalPositionAlign, HorizontalPositionRelativeFrom, ImageRun, Packer, PageBreak, Paragraph, TextRun, TextWrappingSide, TextWrappingType, VerticalPositionRelativeFrom } from "docx";
-import { getStorage, ref, getDownloadURL, listAll } from "firebase/storage";
+import { FormControl, Validators, FormGroup } from '@angular/forms';
+import { AlignmentType, Document, HorizontalPositionAlign, ImageRun, Packer, Paragraph, TextRun, VerticalPositionRelativeFrom } from "docx";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { saveAs } from 'file-saver';
 import { IPoem } from "../models/poem";
 import { Router } from "@angular/router";
@@ -17,39 +17,30 @@ import { Router } from "@angular/router";
 })
 
 export class GeneratorComponent implements OnInit {
-  poemDataBool: boolean = true;
-  formBool: boolean = false;
-  loadingBool = false;
-	successBool = false;
+	poemDataBool: boolean = true;
+	formBool: boolean = false;
 
-	optionsInt: number[][];
-	options: string[];
-	templatePath: string;
-	filteredOptions: Observable<string[]>;
+	dropdownOptions: string[];
+	filteredDropdownOptions: Observable<string[]>;
+
+	poemCodeListUnsorted: number[][];
+	poemCodeList: number[][];
+
 	poemList: number[][];
-	poemListSorted: number[][];
 	startingPoem: number[];
-	poemListPath: string;
 	numOfPoems: number;
 	poemOrder: string;
 	finalPoemList: string[];
 	templateList: any[];
-	outputPath: string;
 	startingPoemRaw: string;
 	loopCounter: number;
-	
-	axisDict = new Map();
+
 	currentAxisNumber: number = 0
 	nextAxisNumberDict = new Map();
 	targetPoemDict = new Map();
-	poemDataList: any;
-	poemCodeListStr: string;
-	poemCodeList: number[][];
-	poemCodeListUnsorted: number[][];
 	poemFormGroup: FormGroup;
 	poemGlyph: any;
 	poemXml: any;
-	poemXmlUnparsed: any;
 	poemText: any;
 	poemTitle: any;
 	url: any;
@@ -60,113 +51,87 @@ export class GeneratorComponent implements OnInit {
 	currentPoemXmlUrl: string;
 	currentGlyphUrl: string;
 
-  
 	constructor(
 		private appService: AppService,
 		private router: Router) {  
 	}
 
   async ngOnInit() {
-	
-		this.poemCodeListUnsorted = await this.appService.getPoemNameList();
-		console.log(this.poemCodeListUnsorted);
-		console.log(this.poemCodeListUnsorted.length);
+
+		const poemCodeListUnsorted: number[][] = await this.appService.getPoemNameList();
 		
 		this.poemFormGroup = new FormGroup ({
 			startingPoemControl: new FormControl(''),
 			poemOrderControl: new FormControl(''),
-			numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(this.poemCodeListUnsorted.length)])
+			numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(poemCodeListUnsorted.length)])
 		});
 
 		this.poemDataBool = false;
 		this.formBool = true; 
 				
-		this.poemCodeList = this.sortByMultipleValues(this.poemCodeListUnsorted);	
-		
-		
+		this.poemCodeList = this.sortByMultipleValues(poemCodeListUnsorted);	
 
-	this.optionsInt = this.poemCodeList;
-	this.options = this.optionsInt.map(value => value.join("-").toString())
-	this.filteredOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges
-	.pipe(
-	startWith(''),
-	map(val => this._filter(val))
-	);
+		const dropdownOptions: string[] = this.poemCodeList.map(value => value.join("-").toString())
+		this.filteredDropdownOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges
+		.pipe(startWith(''), map(value => this._filter(value, dropdownOptions)));
   }
-	imageUrl(imageUrl: any) {
-		throw new Error("Method not implemented.");
-	}
 
-	public async execute() {		
+	async execute() {		
 		this.router.navigate(["/loading"])
-		await this.sleep(100);
 
-		this.startingPoemRaw = this.poemFormGroup.value.startingPoemControl
-		this.startingPoem = this.startingPoemRaw.split('-').map(coord => parseInt(coord))
+		const startingPoemRaw: string = this.poemFormGroup.value.startingPoemControl
+		this.startingPoem = startingPoemRaw.split('-').map(coord => parseInt(coord))
 		this.numOfPoems = this.poemFormGroup.value.numOfPoemsControl
 		this.poemOrder = this.poemFormGroup.value.poemOrderControl
-
-		console.log(this.numOfPoems);
-		console.log(this.startingPoem);
-		console.log(this.poemOrder);	
 
 		this.finalPoemList = this.iterateBySyllables(this.poemCodeList, this.startingPoem, this.numOfPoems, this.poemOrder)
 		
 		this.templateList = await this.createTemplateList(this.finalPoemList)
-		await this.sleep(1000);
-		console.log(this.templateList);
-		console.log(this.templateList.length);
-		
 		this.writeDocument(this.templateList)
-		await this.sleep(1500);
 
 		this.router.navigate(["/success"])
 	}
 
-	public iterateBySyllables(poemList: number[][], startingPoem: number[], numOfPoems: number, poemOrder: string) {
-		let uniqueCoordList1: number[] = this.updateUniqueLists(poemList, startingPoem)[0]
-		let uniqueCoordList2: number[] = this.updateUniqueLists(poemList, startingPoem)[1]
-		let uniqueCoordList3: number[] = this.updateUniqueLists(poemList, startingPoem)[2]
+	iterateBySyllables(poemList: number[][], startingPoem: number[], numOfPoems: number, poemOrder: string) {
+		const [initialUniqueCoordList1, initialUniqueCoordList2, initialUniqueCoordList3]: number[][] = this.updateUniqueLists(poemList, startingPoem);
 
-		let outputList = []
+		const axisDict: Map<number, number[]> = new Map([[0, initialUniqueCoordList1], [1, initialUniqueCoordList2], [2, initialUniqueCoordList3]]);
+		const nextAxisNumberDict: Map<number, number> = new Map([[0, 1], [1, 2], [2, 3]]);
+		const outputList: number[][] = [];
 		let successCounter: number = 0
-		let xLoopCounter: number = 0
-		let yLoopCounter: number = 0
-		let zLoopCounter = 0
-		let currentTargetPoem: number[] = startingPoem
-		
-		this.axisDict.set(0, uniqueCoordList1)		
-		this.axisDict.set(1, uniqueCoordList2)
-		this.axisDict.set(2, uniqueCoordList3)
-		this.nextAxisNumberDict.set(0, 1)
-		this.nextAxisNumberDict.set(1, 2)
-		this.nextAxisNumberDict.set(2, 0)
+		let [xLoopCounter, yLoopCounter, zLoopCounter]: number[] = [0, 0, 0];
+		let currentAxisNumber: number = 0;
+
+		let currentXUniqueList: number[]
+		let currentYUniqueList: number[]
+		let currentZUniqueList: number[]
+		let currentXCoord: number
+		let currentYCoord: number
+		let currentZCoord: number
+		let currentTargetPoem: number[]
 
 		while (successCounter < numOfPoems) {
-			// let axisDict = {0:uniqueCoordList1, 1:uniqueCoordList2, 2:uniqueCoordList3}
-			let currentXUniqueList: number[] = this.axisDict.get(this.currentAxisNumber) as number[]
-			let currentYUniqueList = this.axisDict.get(this.nextAxisNumberDict.get(this.currentAxisNumber) as number) as number[]
-			let currentZUniqueList = this.axisDict.get(this.nextAxisNumberDict.get(this.nextAxisNumberDict.get(this.currentAxisNumber) as number) as number) as number[]
-			let currentXCoord = currentXUniqueList[xLoopCounter]
-			let currentYCoord = currentYUniqueList[yLoopCounter]
-			let currentZCoord = currentZUniqueList[zLoopCounter]
+			currentXUniqueList = axisDict.get(currentAxisNumber) as number[]
+			currentYUniqueList = axisDict.get(nextAxisNumberDict.get(currentAxisNumber) as number) as number[]
+			currentZUniqueList = axisDict.get(nextAxisNumberDict.get(nextAxisNumberDict.get(this.currentAxisNumber) as number) as number) as number[]
+			currentXCoord= currentXUniqueList[xLoopCounter]
+			currentYCoord = currentYUniqueList[yLoopCounter]
+			currentZCoord = currentZUniqueList[zLoopCounter]
 
-			this.targetPoemDict.set(0, [currentXCoord, currentYCoord, currentZCoord])
-			this.targetPoemDict.set(1, [currentZCoord, currentXCoord, currentYCoord])
-			this.targetPoemDict.set(2, [currentYCoord, currentZCoord, currentXCoord])
-			let currentTargetPoem = this.targetPoemDict.get(this.currentAxisNumber)
+			const targetPoemDict: Map<number, number[]> = new Map([[0, [currentXCoord, currentYCoord, currentZCoord]], [1, [currentZCoord, currentXCoord, currentYCoord]], [2, [currentYCoord, currentZCoord, currentXCoord]]]);
+			currentTargetPoem = targetPoemDict.get(this.currentAxisNumber) as number[]
 			
 			if (!this.checkArrIn2dMatrix(outputList, currentTargetPoem) && this.checkArrIn2dMatrix(poemList, currentTargetPoem)) {
 				console.log(successCounter);
-				uniqueCoordList1 = this.updateUniqueLists(poemList, currentTargetPoem)[0]
-				uniqueCoordList2 = this.updateUniqueLists(poemList, currentTargetPoem)[1]
-				uniqueCoordList3 = this.updateUniqueLists(poemList, currentTargetPoem)[2]
+				const uniqueCoordList1 = this.updateUniqueLists(poemList, currentTargetPoem)[0]
+				const uniqueCoordList2 = this.updateUniqueLists(poemList, currentTargetPoem)[1]
+				const uniqueCoordList3 = this.updateUniqueLists(poemList, currentTargetPoem)[2]
 				
-				this.currentAxisNumber = this.nextAxisNumberDict.get(this.currentAxisNumber) as number
+				currentAxisNumber = this.nextAxisNumberDict.get(currentAxisNumber) as number
 				outputList.push(currentTargetPoem.slice(0));
 				poemList = this.removeItem(poemList, currentTargetPoem);
 
-				zLoopCounter  = 0;
+				zLoopCounter = 0;
 				yLoopCounter = 0;
 				xLoopCounter = 0;
 				successCounter++
@@ -187,36 +152,42 @@ export class GeneratorComponent implements OnInit {
 				xLoopCounter += 1;
 			}
 		}
+
+		let outputListOrdered;
 		if (poemOrder == "end") {
-			outputList = outputList.reverse();
+			outputListOrdered = outputList.reverse();
+		} else {
+			outputListOrdered = outputList;
 		}
-		const finalOutputList = outputList.map(value => value.join("-").toString())		
+		const finalOutputList = outputListOrdered.map(value => value.join("-").toString())		
 		return finalOutputList
 	}
 
-	public updateUniqueLists(poemList: number[][], currentPoem: number[]) {
+	updateUniqueLists(poemList: number[][], currentPoem: number[]) {
 		const uniqueCoordList1Raw: number[] = this.sortedUniqueList(poemList, 0)
 		const uniqueCoordList2Raw: number[] = this.sortedUniqueList(poemList, 1)
 		const uniqueCoordList3Raw: number[] = this.sortedUniqueList(poemList, 2)
+
 		const xIndex = uniqueCoordList1Raw.indexOf(currentPoem[0])
 		const yIndex = uniqueCoordList2Raw.indexOf(currentPoem[1]) 
 		const zIndex = uniqueCoordList3Raw.indexOf(currentPoem[2])
+
 		const uniqueCoordList1: number[] = uniqueCoordList1Raw.slice(xIndex).concat(uniqueCoordList1Raw.slice(0, xIndex));
 		const uniqueCoordList2: number[] = uniqueCoordList2Raw.slice(yIndex).concat(uniqueCoordList2Raw.slice(0, yIndex));
 		const uniqueCoordList3: number[] = uniqueCoordList3Raw.slice(zIndex).concat(uniqueCoordList3Raw.slice(0, zIndex));
 		return [uniqueCoordList1, uniqueCoordList2, uniqueCoordList3]
 	}
 
-	public checkArrIn2dMatrix(matrix: number[][], testArr: number[]) {
+	checkArrIn2dMatrix(matrix: number[][], testArr: number[]) {
 		const matrixStr = matrix.map((poemCode) => String(poemCode));	
 		return matrixStr.includes(testArr.toString())
 	}
 
-	public  removeItem(arr: number[][], item: number[]){
+	removeItem(arr: number[][], item: number[]){
 		return arr.filter(f => f.toString() !== item.toString())
 	}
 
-	public async createTemplateList(poemList: string[]) {
+	async createTemplateList(poemList: string[]) {
 		const outputList: IPoem[] = [];
 		for (let index = 0; index < poemList.length; index++) {		
 
@@ -252,11 +223,6 @@ export class GeneratorComponent implements OnInit {
 					console.log(currentGlyph);
 
 					var encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
-					var encodedDataPdf = btoa(currentGlyph);
-					console.log(currentXml);
-					console.log(encodedData);
-
-
 					const parser = new DOMParser();
 					this.poemXml = parser.parseFromString(currentXml, "text/xml");
 
@@ -283,8 +249,7 @@ export class GeneratorComponent implements OnInit {
 		return outputList
 	}
 
-	public writeDocument(outputList: IPoem[]) {
-		
+	writeDocument(outputList: IPoem[]) {
 		const docContentList = [];
 		for (let index = 0; index < outputList.length; index++) { 
 			const poemGlyph = outputList[index].poemGlyph	
@@ -344,11 +309,11 @@ export class GeneratorComponent implements OnInit {
 		});
 
 		Packer.toBlob(doc).then((blob) => {
-			saveAs(blob, "example.docx");
+			saveAs(blob, "syllabary-poems_" + this.startingPoem + "_" + this.numOfPoems + "_.docx");
 		});
 	}
 
-	public sortByMultipleValues(inputList: number[][]): number[][] {
+	sortByMultipleValues(inputList: number[][]): number[][] {
 		const outputListRaw: number[][] = [];
 		const tempList = [];
 		const uniqueCoordList1: number[] = this.sortedUniqueList(inputList, 0)
@@ -370,7 +335,7 @@ export class GeneratorComponent implements OnInit {
 	return outputList
 	}
 
-	public sortedUniqueList(inputList: number[][], coordIndex: number) {
+	sortedUniqueList(inputList: number[][], coordIndex: number) {
 		const currentCoordSet = new Set(inputList.map(poemCode => poemCode[coordIndex]));  
 		const currentCoordUnique = (Array.from(currentCoordSet));		
 		const finalUniqueList = currentCoordUnique.sort(function(a, b){return a - b});
@@ -383,8 +348,8 @@ export class GeneratorComponent implements OnInit {
 		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 	
-	_filter(val: string): string[] {
-    return this.options.filter(option =>
+	_filter(val: string, dropdownOptions: any[]): string[] {
+    return dropdownOptions.filter(option =>
       option.toLowerCase().indexOf(val.toLowerCase()) === 0);              
   }
 }

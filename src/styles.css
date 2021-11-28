@@ -8,3 +8,28 @@ html, body {
     font-family: Roboto, "Helvetica Neue", sans-serif;
     font-size: larger;
 }
+
+.main-container {
+    display: flex;    
+    justify-content: center;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column; 
+    background-color: rgb(252, 252, 252);
+    border-radius: 1em;
+    margin-top: 3em;
+    padding: 3em 4em;
+}
+
+.standard-input {
+    width: 100%;
+}
+
+.centered-container {
+    display: flex;
+    justify-content: center;
+}
