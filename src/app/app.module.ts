@@ -17,6 +17,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoadingComponent } from './loading/loading.component';
 import { SuccessComponent } from './success/success.component';
 import { RouterModule, Routes } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 
 const routes: Routes = [
   { path: "", component: LoginComponent},
@@ -39,6 +40,7 @@ const routes: Routes = [
     AngularFireStorageModule,
     HttpClientModule,
     ReactiveFormsModule,
+    MatButtonModule,
     MatAutocompleteModule,
     MatInputModule,
     BrowserAnimationsModule,
