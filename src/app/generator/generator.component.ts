@@ -32,8 +32,7 @@ export class GeneratorComponent implements OnInit {
 
 	constructor(
 		private appService: AppService,
-		private router: Router) {  
-	}
+		private router: Router) { }
 
   async ngOnInit() {
 		const poemCodeListUnsorted: number[][] = await this.appService.getPoemNameList();
@@ -74,7 +73,7 @@ export class GeneratorComponent implements OnInit {
 		let [uniqueCoordList1, uniqueCoordList2, uniqueCoordList3]: number[][] = this.updateUniqueLists(poemList, startingPoem);
 
 		const axisDict: Map<number, number[]> = new Map([[0, uniqueCoordList1], [1, uniqueCoordList2], [2, uniqueCoordList3]]);
-		const nextAxisNumberDict: Map<number, number> = new Map([[0, 1], [1, 2], [2, 3]]);
+		const nextAxisNumberDict: Map<number, number> = new Map([[0, 1], [1, 2], [2, 0]]);
 		const outputList: number[][] = [];
 		let successCounter: number = 0
 		let [xLoopCounter, yLoopCounter, zLoopCounter]: number[] = [0, 0, 0];
