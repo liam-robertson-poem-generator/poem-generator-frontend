@@ -189,20 +189,15 @@ export class GeneratorComponent implements OnInit {
 					console.log(error.code);
 			});
 
+			const currentXml = await this.appService.getPoemXml(this.currentPoemXmlUrl).toPromise();
 			const currentGlyph = await this.appService.getPoemGlyph(this.currentGlyphUrl).toPromise();
+
 			const encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
+			const parser = new DOMParser();
+			const poemXml = parser.parseFromString(currentXml, "text/xml");
 
-
-			let poemXmlStr: string;
-			let xhttp = new XMLHttpRequest();
-			xhttp.onreadystatechange = function() {
-				if (this.readyState == 4 && this.status == 200) {
-				poemXmlStr = xhttp.responseText;
-				const parser = new DOMParser();
-				const currentXml = parser.parseFromString(poemXmlStr, "application/xml");
-
-			const poemText = currentXml.getElementsByTagName("text")[0].textContent
-			let poemTitle = currentXml.getElementsByTagName("title")[0].textContent
+			const poemText = poemXml.getElementsByTagName("text")[0].textContent
+			let poemTitle = poemXml.getElementsByTagName("title")[0].textContent
 			if (poemTitle == "") {
 				poemTitle = currentPoemName
 			}
@@ -217,10 +212,6 @@ export class GeneratorComponent implements OnInit {
 				poemGlyph: encodedData,
 				hasTextVar: hasTextVar,
 			})
-		}
-	};
-	xhttp.open("GET", this.currentPoemXmlUrl, true);
-	xhttp.send();
 		}				
 		return outputList
 	}
