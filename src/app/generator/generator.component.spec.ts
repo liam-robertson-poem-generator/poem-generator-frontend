@@ -67,7 +67,7 @@ describe('GeneratorComponent', () => {
     expect(expectedIterated4).toEqual(actualOutput4); 
     expect(expectedIterated5).toEqual(actualOutput5); 
   });
-
+ 
   const randomPoemList3 =  
   [ [ 11, 4, 2 ],
   [ 8, 2, 4 ],

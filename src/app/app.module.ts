@@ -16,15 +16,9 @@ import { LoginComponent } from './login/login.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoadingComponent } from './loading/loading.component';
 import { SuccessComponent } from './success/success.component';
-import { RouterModule, Routes } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-
-const routes: Routes = [
-  { path: "", component: LoginComponent},
-  { path: "generator", component: GeneratorComponent},
-  { path: "loading", component: LoadingComponent},
-  { path: "success", component: SuccessComponent},
-];
+import { AppRoutingModule } from './app-routing.module';
 
 @NgModule({
   declarations: [   
@@ -35,6 +29,7 @@ const routes: Routes = [
     SuccessComponent,
   ],
   imports: [
+    AngularFireModule.initializeApp(environment.firebase),
     BrowserModule,
     FormsModule,
     AngularFireStorageModule,
@@ -46,9 +41,9 @@ const routes: Routes = [
     BrowserAnimationsModule,
     MatSelectModule,
     MatProgressBarModule,
+    RouterModule,
     MatFormFieldModule,
-    AngularFireModule.initializeApp(environment.firebase),
-    RouterModule.forRoot(routes),
+    AppRoutingModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
