@@ -19,13 +19,8 @@ import { Router } from "@angular/router";
 export class GeneratorComponent implements OnInit {
 
 	// To Do List:
-	// - Router guards
-	// - Fix algorithm
-	// - Default page instead of blank login
-	// - Routing Loading pages
 	// - Make sure the line breaks within poems are conserved (in conversion from xml to json).
-	// - Do a full run to check it works
-	// - investigate random 403 errors when you do a big run
+	// - symbol
 	
 	poemDataBool: boolean = true;
 	formBool: boolean = false;
