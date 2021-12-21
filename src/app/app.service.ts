@@ -1,42 +1,39 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, retry } from 'rxjs/operators';
-import { getDownloadURL, getStorage, listAll, ref, StorageReference } from 'firebase/storage';
+import { catchError, map, retry } from 'rxjs/operators';
 import { resolve } from 'dns';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AppService {
-  storage = getStorage();
-  listRef = ref(this.storage, 'poem-xml');
 
   constructor(public http: HttpClient) {}
 
   private generatorHeaders = {
     headers: new HttpHeaders({
-      'Content-Type':  'application/json',
-    }),
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    })
   };
 
-  async getPoemNameList(): Promise<number[][]> {
-  const poemNameList: number[][] = []
-  await listAll(this.listRef)
-  .then((res) => {
-    res.items.forEach((itemRef) => {
-      const poemNameMatrix: number[] = itemRef.name.slice(0, -4).split("-").map(coord => parseInt(coord))
-      poemNameList.push(poemNameMatrix);
-    });
-  })
-  return poemNameList;
-}
-
-  getPoemXml(poemUrl: string): Observable<any> {
-    return this.http.get(poemUrl, {responseType: 'text'});
+  getPoemNameList(): Observable<number[][]> {
+    return this.http.get<string[]>("http://localhost:4200/api/poem-generator/listAllPoems")
+    .pipe(
+    map((poemNameList: string[]) => 
+      poemNameList.map((poemName: string) => 
+        <number[]>poemName.slice(0,-4).split("-").map((coord: string) => 
+          <number>parseInt(coord)))
+      )
+    )
   }
 
-  getPoemGlyph(glyphUrl: string): Observable<any> {
-    return this.http.get(glyphUrl, {responseType: "arraybuffer"});
+  getPoemXml(poemName: string): Observable<string> {
+    return this.http.get("http://localhost:4200/api/poems/" + poemName + ".xml", {responseType: 'text'});
+  }
+
+  getPoemGlyph(poemName: string): Observable<ArrayBuffer> {
+    return this.http.get("http://localhost:4200/api/glyphs/" + poemName + ".jpg", {responseType: "arraybuffer"});
   }
 }

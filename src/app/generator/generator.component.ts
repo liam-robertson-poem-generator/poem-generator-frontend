@@ -4,10 +4,10 @@ import { startWith, map } from "rxjs/operators";
 import { AppService } from "../app.service";
 import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { AlignmentType, Document, HorizontalPositionAlign, ImageRun, Packer, Paragraph, TextRun, VerticalPositionRelativeFrom } from "docx";
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { saveAs } from 'file-saver';
 import { IPoem } from "./models/poem";
 import { Router } from "@angular/router";
+import { HttpErrorResponse } from "@angular/common/http";
 
 @Component({
   selector: 'app-generator',
@@ -32,6 +32,7 @@ export class GeneratorComponent implements OnInit {
 	poemCodeList: number[][];
 	currentPoemXmlUrl: string;
 	currentGlyphUrl: string;
+	poemNameList: string[];
 
 	constructor(
 		private appService: AppService,
@@ -39,22 +40,24 @@ export class GeneratorComponent implements OnInit {
 		) { }
 
   async ngOnInit() {
-		const poemCodeListUnsorted: number[][] = await this.appService.getPoemNameList();
-		
-		this.poemFormGroup = new FormGroup ({
-			startingPoemControl: new FormControl(''),
-			poemOrderControl: new FormControl(''),
-			numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(poemCodeListUnsorted.length)])
+		this.appService.getPoemNameList().subscribe(poemCodeListUnsorted => {
+			
+			this.poemFormGroup = new FormGroup ({
+				startingPoemControl: new FormControl(''),
+				poemOrderControl: new FormControl(''),
+				numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(poemCodeListUnsorted.length)])
+			});
+
+			this.poemDataBool = false;
+			this.formBool = true; 
+					
+			this.poemCodeList = this.sortByMultipleValues(poemCodeListUnsorted);	
+
+			const dropdownOptions: string[] = this.poemCodeList.map(value => value.join("-").toString())
+			this.filteredDropdownOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges
+			.pipe(startWith(''), map(value => this._filter(value, dropdownOptions)));			
 		});
 
-		this.poemDataBool = false;
-		this.formBool = true; 
-				
-		this.poemCodeList = this.sortByMultipleValues(poemCodeListUnsorted);	
-
-		const dropdownOptions: string[] = this.poemCodeList.map(value => value.join("-").toString())
-		this.filteredDropdownOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges
-		.pipe(startWith(''), map(value => this._filter(value, dropdownOptions)));
   }
 
 	async execute() {		
@@ -167,30 +170,8 @@ export class GeneratorComponent implements OnInit {
 			let hasTextVar = true;
 			const currentPoemName = poemList[index] 
 
-			const storage = getStorage();
-			const xmlRef = ref(storage, 'poem-xml/' + currentPoemName + '.xml');
-			const glyphRef = ref(storage, 'glyphs/' + currentPoemName + '.jpg');
-			
-
-
-			await getDownloadURL(xmlRef)
-				.then((xmlUrl) => {
-					this.currentPoemXmlUrl = xmlUrl
-				})
-				.catch((error) => {
-					console.log(error.code);
-			});
-
-			await getDownloadURL(glyphRef)
-				.then((glyphUrl) => {
-					this.currentGlyphUrl = glyphUrl
-				})
-				.catch((error) => {
-					console.log(error.code);
-			});
-
-			const currentXml = await this.appService.getPoemXml(this.currentPoemXmlUrl).toPromise();
-			const currentGlyph = await this.appService.getPoemGlyph(this.currentGlyphUrl).toPromise();
+			const currentXml = await this.appService.getPoemXml(currentPoemName).toPromise();
+			const currentGlyph = await this.appService.getPoemGlyph(currentPoemName).toPromise();
 
 			const encodedData = 'data:image/jpeg;base64,' + Buffer.from(currentGlyph).toString('base64')
 			const parser = new DOMParser();

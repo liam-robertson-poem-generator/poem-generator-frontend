@@ -12,7 +12,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { LoginComponent } from './login/login.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LoadingComponent } from './loading/loading.component';
 import { SuccessComponent } from './success/success.component';
@@ -23,7 +22,6 @@ import { AppRoutingModule } from './app-routing.module';
 @NgModule({
   declarations: [   
     GeneratorComponent,
-    LoginComponent,
     AppComponent,
     LoadingComponent,
     SuccessComponent,

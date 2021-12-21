@@ -19,6 +19,6 @@ export class SuccessComponent implements OnInit {
   }
 
   backToMain() {
-    this.router.navigate(["/generator"])
+    this.router.navigate(["/"])
   }
 }
