@@ -3,11 +3,8 @@ import { Observable } from "rxjs";
 import { startWith, map } from "rxjs/operators";
 import { AppService } from "../app.service";
 import { FormControl, Validators, FormGroup } from '@angular/forms';
-import { AlignmentType, Document, HorizontalPositionAlign, ImageRun, Packer, Paragraph, TextRun, VerticalPositionRelativeFrom } from "docx";
-import { saveAs } from 'file-saver';
 import { IPoem } from "./models/poem";
 import { Router } from "@angular/router";
-import { HttpErrorResponse } from "@angular/common/http";
 
 @Component({
   selector: 'app-generator',
@@ -178,6 +175,8 @@ export class GeneratorComponent implements OnInit {
 			const poemXml = parser.parseFromString(currentXml, "text/xml");
 
 			const poemText = poemXml.getElementsByTagName("text")[0].textContent
+			console.log(poemText);
+			
 			let poemTitle = poemXml.getElementsByTagName("title")[0].textContent
 			if (poemTitle == "") {
 				poemTitle = currentPoemName
@@ -198,64 +197,6 @@ export class GeneratorComponent implements OnInit {
 	}
 
 	writeDocument(outputList: IPoem[]) {
-		const docContentList = [];
-		for (let index = 0; index < outputList.length; index++) { 
-			const poemGlyph = outputList[index].poemGlyph	
-		
-			const poemImage = new ImageRun({
-				data: poemGlyph,
-				transformation: {
-					width: 215,
-					height: 215,
-				},
-				floating: {
-					horizontalPosition: {
-						align: HorizontalPositionAlign.CENTER,
-						offset: 0,
-					},
-					verticalPosition: {
-						relative: VerticalPositionRelativeFrom.PARAGRAPH,
-						offset: 2014400,
-					},
-				},
-			});	
-
-			const currentTitle = 
-				new Paragraph({
-					children: [ 
-						new TextRun({text: outputList[index].poemTitle, font: "Garamond", size: 40}),
-					],
-					pageBreakBefore: true,
-					alignment: AlignmentType.CENTER,
-				})
-
-			const currentText = 
-				new Paragraph({
-					children: [ 
-						new TextRun({text: outputList[index].poemText, font: "Garamond", size: 30, break: 2}),
-					],
-				})
-
-			const currentImage = new Paragraph({
-				children: [
-					poemImage
-				]})
-				
-			docContentList.push(currentTitle) 
-			docContentList.push(currentText) 
-			docContentList.push(currentImage) 
-		}
-		
-		const doc = new Document({
-			sections: [{
-				properties: {},
-				children: docContentList,
-			}]
-		});
-
-		Packer.toBlob(doc).then((blob) => {
-			saveAs(blob, "syllabary-poems_" + this.startingPoem.join("-") + "_" + this.numOfPoems + "_" + this.poemOrder + ".docx");
-		});
 	}
 
 	sortByMultipleValues(inputList: number[][]): number[][] {
