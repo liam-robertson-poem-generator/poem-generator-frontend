@@ -4,6 +4,7 @@ import { startWith, map } from "rxjs/operators";
 import { AppService } from "../app.service";
 import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { Router } from "@angular/router";
+import { IGeneratorParameters } from '../models/generatorParameters';
 import * as saveAs from "file-saver";
 
 @Component({
@@ -18,7 +19,7 @@ export class GeneratorComponent implements OnInit {
 	formBool: boolean = false;
 	poemCodeList: number[][] = [];
 	filteredDropdownOptions: Observable<string[]>;
-	startingPoem: string;
+	startingPoem: number[];
 	numOfPoems: number;
 	poemOrder: string;
 	maxNumPoems: number = 0;
@@ -40,7 +41,6 @@ export class GeneratorComponent implements OnInit {
 			this.poemCodeList = poemCodeList
 			this.loadingBool = false;
 			this.formBool = true; 
-
 			const dropdownOptions: string[] = this.poemCodeList.map(value => value.join("-").toString())
 			this.filteredDropdownOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges.pipe(startWith(''), map(value => this._filter(value, dropdownOptions)));			
 		});
@@ -49,23 +49,23 @@ export class GeneratorComponent implements OnInit {
 
 	async execute() {		
 		this.router.navigate(["/loading"])
-
-		this.startingPoem= this.poemFormGroup.value.startingPoemControl
+		this.startingPoem = this.poemFormGroup.value.startingPoemControl.split("-").map((coord: string) => parseInt(coord))
 		this.numOfPoems = this.poemFormGroup.value.numOfPoemsControl
 		this.poemOrder = this.poemFormGroup.value.poemOrderControl
+		const generatorParameters: IGeneratorParameters = {
+			startingPoem: this.startingPoem,
+			numOfPoems: this.numOfPoems,
+			poemOrder: this.poemOrder
+		};
 
-		this.router.navigate(["/success"])
-		this.downloadWordDoc("test.docx")
-	}
-
-	downloadWordDoc(filename: string) {
-		this.appService.getWordDoc().subscribe(doc => {
-			saveAs(doc, "hello world.docx");
+		this.appService.createWordDoc(generatorParameters).subscribe(response => {		
+			console.log(response);
+			this.appService.getWordDoc().subscribe(doc => {
+				const docName = this.numOfPoems +  "_" + this.startingPoem.join("-") + "_" + this.poemOrder + "_.docx"
+				saveAs(doc, docName);
+				this.router.navigate(["/success"])
+			})	
 		})	
-	}
-
-	sleep(ms: number) { 
-		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 	
 	_filter(val: string, dropdownOptions: any[]): string[] {
