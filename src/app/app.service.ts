@@ -19,21 +19,15 @@ export class AppService {
   };
 
   getPoemNameList(): Observable<number[][]> {
-    return this.http.get<string[]>("http://localhost:4200/api/poem-generator/listAllPoems")
-    .pipe(
-    map((poemNameList: string[]) => 
-      poemNameList.map((poemName: string) => 
-        <number[]>poemName.slice(0,-4).split("-").map((coord: string) => 
-          <number>parseInt(coord)))
-      )
-    )
+    return this.http.get<number[][]>("http://localhost:4200/api/poem-generator/listAllPoems")
   }
 
-  getPoemXml(poemName: string): Observable<string> {
-    return this.http.get("http://localhost:4200/api/poems/" + poemName + ".xml", {responseType: 'text'});
+  sendGeneratorParameters(): Observable<number[][]> {
+    return this.http.get<number[][]>("http://localhost:4200/api/poem-generator/listAllPoems")
   }
 
-  getPoemGlyph(poemName: string): Observable<ArrayBuffer> {
-    return this.http.get("http://localhost:4200/api/glyphs/" + poemName + ".jpg", {responseType: "arraybuffer"});
+  getWordDoc(): Observable<Blob> {
+    return this.http.get("http://localhost:4200/api/poem-generator/outputDocument/output.docx", {responseType: "blob"});
   }
+
 }

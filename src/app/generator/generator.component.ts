@@ -4,6 +4,7 @@ import { startWith, map } from "rxjs/operators";
 import { AppService } from "../app.service";
 import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { Router } from "@angular/router";
+import * as saveAs from "file-saver";
 
 @Component({
   selector: 'app-generator',
@@ -13,14 +14,15 @@ import { Router } from "@angular/router";
 })
 
 export class GeneratorComponent implements OnInit {
-	poemFormGroup: FormGroup;
-	poemDataBool: boolean;
-	formBool: boolean;
-	poemCodeList: number[][];
+	loadingBool: boolean = true;
+	formBool: boolean = false;
+	poemCodeList: number[][] = [];
 	filteredDropdownOptions: Observable<string[]>;
 	startingPoem: string;
 	numOfPoems: number;
 	poemOrder: string;
+	maxNumPoems: number = 0;
+	poemFormGroup: FormGroup;
 
 	constructor(
 		private appService: AppService,
@@ -29,21 +31,18 @@ export class GeneratorComponent implements OnInit {
 
   async ngOnInit() {
 		this.appService.getPoemNameList().subscribe(poemCodeList => {
-			
 			this.poemFormGroup = new FormGroup ({
 				startingPoemControl: new FormControl(''),
 				poemOrderControl: new FormControl(''),
 				numOfPoemsControl: new FormControl('', [Validators.min(0), Validators.max(poemCodeList.length)])
 			});
 
-			this.poemDataBool = false;
+			this.poemCodeList = poemCodeList
+			this.loadingBool = false;
 			this.formBool = true; 
-					
-			const dropdownOptions: string[] = this.poemCodeList.map(value => value.join("-").toString())
 
-			this.filteredDropdownOptions = this.poemFormGroup
-				.get('startingPoemControl')!.valueChanges
-				.pipe(startWith(''), map(value => this._filter(value, dropdownOptions)));			
+			const dropdownOptions: string[] = this.poemCodeList.map(value => value.join("-").toString())
+			this.filteredDropdownOptions = this.poemFormGroup.get('startingPoemControl')!.valueChanges.pipe(startWith(''), map(value => this._filter(value, dropdownOptions)));			
 		});
 
   }
@@ -56,6 +55,13 @@ export class GeneratorComponent implements OnInit {
 		this.poemOrder = this.poemFormGroup.value.poemOrderControl
 
 		this.router.navigate(["/success"])
+		this.downloadWordDoc("test.docx")
+	}
+
+	downloadWordDoc(filename: string) {
+		this.appService.getWordDoc().subscribe(doc => {
+			saveAs(doc, "hello world.docx");
+		})	
 	}
 
 	sleep(ms: number) { 
