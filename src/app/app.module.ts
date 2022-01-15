@@ -1,9 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
-import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFireStorageModule } from '@angular/fire/compat/storage';
-import { environment } from '../environments/environment';
 import { GeneratorComponent } from './generator/generator.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -27,7 +25,6 @@ import { AppRoutingModule } from './app-routing.module';
     SuccessComponent,
   ],
   imports: [
-    AngularFireModule.initializeApp(environment.firebase),
     BrowserModule,
     FormsModule,
     AngularFireStorageModule,

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { IGeneratorParameters } from './models/generatorParameters';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -17,20 +17,12 @@ export class AppService {
     })
   };
 
-  createWordDoc(generatorParameters: IGeneratorParameters) {
-    return this.http.post("http://localhost:4200/api/poem-generator/createDocument", generatorParameters, {responseType: 'text'})
+  createWordDoc(generatorParameters: String): Observable<Blob> {
+    return this.http.get("http://" + environment.env + "poem-generator/createDocument?" + generatorParameters, {responseType: "blob"})
   }
 
   getPoemNameList(): Observable<number[][]> {
-    return this.http.get<number[][]>("http://localhost:4200/api/poem-generator/listAllPoems")
-  }
-
-  sendGeneratorParameters(): Observable<number[][]> {
-    return this.http.get<number[][]>("http://localhost:4200/api/poem-generator/listAllPoems")
-  }
-
-  getWordDoc(): Observable<Blob> {
-    return this.http.get("http://localhost:4200/api/poem-generator/outputDocument/output.docx", {responseType: "blob"});
+    return this.http.get<number[][]>("http://" + environment.env + "poem-generator/listAllPoems")
   }
 
 }

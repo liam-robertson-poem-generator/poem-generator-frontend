@@ -1,10 +1,9 @@
 import { Component, OnInit } from "@angular/core";
 import { Observable } from "rxjs";
-import { startWith, map } from "rxjs/operators";
+import { startWith, map, catchError } from "rxjs/operators";
 import { AppService } from "../app.service";
 import { FormControl, Validators, FormGroup } from '@angular/forms';
 import { Router } from "@angular/router";
-import { IGeneratorParameters } from '../models/generatorParameters';
 import * as saveAs from "file-saver";
 
 @Component({
@@ -52,20 +51,18 @@ export class GeneratorComponent implements OnInit {
 		this.startingPoem = this.poemFormGroup.value.startingPoemControl.split("-").map((coord: string) => parseInt(coord))
 		this.numOfPoems = this.poemFormGroup.value.numOfPoemsControl
 		this.poemOrder = this.poemFormGroup.value.poemOrderControl
-		const generatorParameters: IGeneratorParameters = {
-			startingPoem: this.startingPoem,
-			numOfPoems: this.numOfPoems,
-			poemOrder: this.poemOrder
-		};
+		const generatorParameters =
+			"numOfPoems=" + this.numOfPoems + 
+			"&startingPoem=" + "[" + this.startingPoem + "]" +
+			"&poemOrder=" + this.poemOrder
 
-		this.appService.createWordDoc(generatorParameters).subscribe(response => {		
-			console.log(response);
-			this.appService.getWordDoc().subscribe(doc => {
-				const docName = this.numOfPoems +  "_" + this.startingPoem.join("-") + "_" + this.poemOrder + "_.docx"
-				saveAs(doc, docName);
-				this.router.navigate(["/success"])
-			})	
-		})	
+		this.appService.createWordDoc(generatorParameters).subscribe(response => {	
+			const docName = "syllabary-poems_" + this.numOfPoems +  "_" + this.startingPoem.join("-") + "_" + this.poemOrder + "_.docx"
+			saveAs(response, docName);
+			this.router.navigate(["/success"])	
+		}, 
+		err => alert(err)
+		)
 	}
 	
 	_filter(val: string, dropdownOptions: any[]): string[] {
