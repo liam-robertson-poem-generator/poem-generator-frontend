@@ -60,9 +60,7 @@ export class GeneratorComponent implements OnInit {
 			const docName = "syllabary-poems_" + this.numOfPoems +  "_" + this.startingPoem.join("-") + "_" + this.poemOrder + "_.docx"
 			saveAs(response, docName);
 			this.router.navigate(["/success"])	
-		}, 
-		err => alert(err)
-		)
+		})
 	}
 	
 	_filter(val: string, dropdownOptions: any[]): string[] {
